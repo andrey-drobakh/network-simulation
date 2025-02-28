@@ -1,0 +1,36 @@
+	Network Simulation Project Notes
+	
+	
+General Description :
+
+	The user opens the application window. The window is a terminal
+	window where the user can enter some commands. Using these commands,
+	the user can interact with a server that responds to the user's
+	requests. This way, the user might use different apps that, actually,
+	support multiple users.
+
+
+General Requirements :
+
+	- For a given application, ability to use this application by many
+	clients and so that a server would manage the app also.
+
+
+Specific Requirements :
+
+	- Start with a single server. Let its command family call "srv".
+	Then, we have these basic commands:
+		- srv register <username>
+		- srv login <username>
+		- srv logout
+		- srv signout/leave/unregister
+	To implement using the server by multiple users independently, we
+	should make the server running in a separate thread and use a dispatcher
+	that will manage user requests and server responses through some queus.
+	- [UI] When pressing Up/Down arrow keys, user should see commands he've
+	entered before;
+	
+	
+Bugs :
+	- when the caret in the middle of the line being typed, and we press
+	Enter, then the behaviour is incorrect;
