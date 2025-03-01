@@ -8,15 +8,19 @@ General Description :
 	the user can interact with a server that responds to the user's
 	requests. This way, the user might use different apps that, actually,
 	support multiple users.
+	
+	So, this app is like a regular system terminal application, but with
+	emphasis on multiuser interaction.
 
 
-General Requirements :
+General Goals :
 
 	- For a given application, ability to use this application by many
-	clients and so that a server would manage the app also.
+	clients and so that a server would manage the app also. To start, this app
+	might be a simple game;
 
 
-Specific Requirements :
+Specific Goals :
 
 	- Start with a single server. Let its command family call "srv".
 	Then, we have these basic commands:
@@ -24,11 +28,22 @@ Specific Requirements :
 		- srv login <username>
 		- srv logout
 		- srv signout/leave/unregister
-	To implement using the server by multiple users independently, we
+	To implement usage the server by multiple users independently, we
 	should make the server running in a separate thread and use a dispatcher
-	that will manage user requests and server responses through some queus.
-	- [UI] When pressing Up/Down arrow keys, user should see commands he've
-	entered before;
+	that will manage user requests and server responses through some queus;
+	- [UI] When pressing Up/Down arrow keys, user should see commands he's
+	entered before. These user inputs should be saved across executions;
+	- [UI] When pressing Ctrl-W, the current word, i.e. one the caret is on,
+	should be removed;
+	- fix bugs;
+	- [func] Implement 'simulation' module that is needed for simulating
+	presence of several users, which would be able to use the server at the
+	same time;
+	- [func] Implement short messages exchange between users;
+	- [func]? Implement chat (as a server service, maybe), when users post
+	messages and all other users (from the same 'group') can see it;
+	- [UI] Make password input hidden, for example by putting '*' instead of
+	letter and numeric symbols;
 	
 	
 Bugs :
