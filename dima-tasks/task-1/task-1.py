@@ -10,11 +10,17 @@ sys.path.append( "../../" )
 from src.core import UserAccount
 
 
-def print_user_account( user_account : UserAccount ) :
-    pass
+def print_user_account(person) :
+    print(f'username - {person.username}, password - {person.password}')
 
-def task_1a() :
-    pass
+
+def task_1a(x, y) :
+    psn = UserAccount(x, y)
+    return psn
+
+
+print_user_account(task_1a('Don Pedro', 'Pedro_777'))
+
 
 def task_1b() :
     pass
