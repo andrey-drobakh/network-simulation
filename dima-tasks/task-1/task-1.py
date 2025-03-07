@@ -16,11 +16,16 @@ def print_user_account(person) :
 
 def task_1a(x, y) :
     psn = UserAccount(x, y)
-    return psn
+    print_user_account(psn)
 
 
-print_user_account(task_1a('Don Pedro', 'Pedro_777'))
+task_1a('DM', '888')
 
 
-def task_1b() :
-    pass
+def task_1b(account_lst) :
+    for i in account_lst:
+        print(f'username = {i.username}, password = {i.password}')
+
+
+task_1b( [(UserAccount( i, i+100)) for i in range(1, 7)] )
+
