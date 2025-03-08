@@ -24,7 +24,7 @@ task_1a('DM', '888')
 
 def task_1b(account_lst) :
     for i in account_lst:
-        print(f'username = {i.username}, password = {i.password}')
+        print_user_account(i)
 
 
 task_1b( [(UserAccount( i, i+100)) for i in range(1, 7)] )
