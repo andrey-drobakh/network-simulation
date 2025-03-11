@@ -37,12 +37,14 @@ def is_normal_username(username):
         return True if username.isalpha() or username.isalnum() else False
     return False
 
+t_dict = {
+    'aaaaa': True,
+    '1ooooo': False,
+    'DA': False,
+    'DD***XXX': False,
+    'GGG': True,
+    '#dghhgfds': False
+}
 
-s = TestCase('dggdgd', True)
-n = TestCase('1ffhfj', False)
-o = TestCase('DA', False)
-w = TestCase('d**ghghg', False)
-u = TestCase('&fghjjd', False)
-p = TestCase('ABRAKADABRA', True)
+run_tests(is_normal_username, [TestCase(x, y) for x, y in t_dict.items()])
 
-run_tests(is_normal_username, [s, n, o, w, u, p])
