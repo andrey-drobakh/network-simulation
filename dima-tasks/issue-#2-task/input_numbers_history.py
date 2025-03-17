@@ -15,7 +15,7 @@ def run_program() :
         # то есть если это число или что-то другое.
         if input_line not in input_history_lines and input_line not in exit_lines :
             # add input line to history
-            ls += input_line.split()
+            ls.append(input_line)
             l = len(ls)
         elif input_line in ( '<=', 'back' ) :
             # print previous input line
