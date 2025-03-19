@@ -33,12 +33,11 @@ task_1b([(UserAccount(i, i + 100)) for i in range(1, 7)])
 
 
 def is_normal_username(username):
-    if username[0].isalpha() and len(username) >= 3:
-        return username.isalnum()
-    return False
+    return len(username) >=3 and username[0].isalpha() and username.isalnum()
+
 
 t_dict = {
-    'aaaaa': True,
+    '': False,
     '1ooooo': False,
     'DA': False,
     'DD***XXX': False,
