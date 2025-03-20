@@ -20,15 +20,15 @@ def run_program() :
         elif input_line in ( '<=', 'back' ) :
             # print previous input line
             if l >= 1:
-                print(ls[l-1])
                 l -= 1
+                print(ls[l])
             else:
                 print('Конец истории, листайте вперёд!')
         elif input_line in ( '=>', 'forth' ) :
             # print next input line
+            l += 1
             if l < len(ls):
                 print(ls[l])
-                l += 1
             else:
                 print('Конец истории, листайте назад!')
         elif input_line in exit_lines :
