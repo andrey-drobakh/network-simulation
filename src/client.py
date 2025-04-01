@@ -2,8 +2,11 @@ import core
 from core import ServerResponse
 from dispatcher import Dispatcher
 from terminal import TerminalWindow
+import message_exchange as msg
 
+from threading import Thread
 from time import sleep
+from datetime import datetime
 
 
 def quoted( line : str ) :
@@ -106,6 +109,7 @@ class TerminalLineHandler :
 		self.current_prompt_length = 0
 		self.current_user_request = None
 		self.current_user_account = None
+		self.error_message = None
 
 	def set_window( self, window ) :
 		self.current_prompt_length = len(window.prompt)
@@ -128,13 +132,20 @@ class TerminalLineHandler :
 			reader = self._command_reader
 			request = reader.generate_request( line )
 
+			self.current_user_request = request
+
 			if request is None :
 				return
 
 			if self.current_user_account is not None :
 				request.requester_account = self.current_user_account
 
-			self.current_user_request = request
+			# if online and request is about reg/login, then show error message.
+			if self.current_user_account is not None and \
+					(request.ur_type == core.UR_REGISTER or request.ur_type == core.UR_LOGIN):
+				self.error_message = "to register or log in, you must logout first"
+
+				return
 
 			d.add_user_request( request )
 
@@ -169,6 +180,8 @@ class ServerResponseHandler :
 	def handle( self, server_response : ServerResponse ):
 		prefix = "CLIENT : "
 
+		print( prefix + "SRH handle ..." )
+
 		sr_type = server_response.sr_type
 		dest_account = server_response.destination_account
 		tl_handler = self._tl_handler
@@ -176,6 +189,7 @@ class ServerResponseHandler :
 
 		if sr_type == core.SR_REGISTRATION_ACCOUNT_PASSWORD_NOT_GIVEN:
 			prompt = "Invent password : "
+			w.prompt = prompt
 			w.display_prompt(prompt)
 
 			tl_handler.current_prompt_length = len(prompt)
@@ -187,6 +201,7 @@ class ServerResponseHandler :
 			)
 		elif sr_type == core.SR_REGISTRATION_ACCOUNT_PASSWORD_CONFIRM:
 			prompt = "Confirm password : "
+			w.prompt = prompt
 			w.display_prompt(prompt)
 
 			tl_handler.current_prompt_length = len(prompt)
@@ -197,6 +212,7 @@ class ServerResponseHandler :
 				core.UR_CONFIRM_ACCOUNT_PASSWORD
 			)
 		elif sr_type == core.SR_REGISTRATION_ACCOUNT_PASSWORD_CONFIRMATION_FAILED:
+			w.reset_prompt()
 			w.display_error_message(server_response.error_message)
 
 			tl_handler.reset(len(self._window.prompt))
@@ -236,6 +252,7 @@ class ServerResponseHandler :
 			tl_handler.reset(len(self._window.prompt))
 			tl_handler.current_user_account = server_response.data
 		elif sr_type == core.SR_LOGIN_FAILED_WRONG_PASSWORD :
+			w.reset_prompt()
 			w.display_error_message( server_response.error_message )
 
 			tl_handler.reset(len(self._window.prompt))
@@ -249,17 +266,37 @@ class ServerResponseHandler :
 			w.display_error_message( server_response.error_message )
 
 			tl_handler.reset(len(self._window.prompt))
-		elif sr_type == core.SR_LOGIN_FAILED_A_USER_LOGGED :
+		elif sr_type == core.SR_LOGIN_FAILED_USER_ALREADY_LOGGED :
 			w.display_error_message(server_response.error_message)
 
 			tl_handler.reset(len(self._window.prompt))
+		elif sr_type == msg.SR_MESSAGING_FAILED_USER_IS_NOT_REGISTERED :
+			w.display_error_message(server_response.error_message)
+
+			tl_handler.reset(len(self._window.prompt))
+		elif sr_type == msg.SR_MESSAGING_FAILED_USER_IS_OFFLINE :
+			w.display_error_message(server_response.error_message)
+
+			tl_handler.reset(len(self._window.prompt))
+
+			print( "user is offline" )
+		elif sr_type == msg.SR_MESSAGING_PASSED :
+			w.display_current_prompt()
+
+			tl_handler.reset(len(self._window.prompt))
+		elif sr_type == msg.SR_MESSAGING_A_MESSAGE_CAME :
+			time_info = datetime.now().strftime( "%H:%M:%S" )
+			sender_name = server_response.data[ 1 ].username
+			text = f"\n  {time_info}\n  from <{sender_name}> : {server_response.data[ 0 ]}\n"
+
+			w.display_message( text )
 		else :
 			print(prefix + f"Unknown server response type : value {sr_type}")
 
 
 class CLIClient :
 	def __init__( self, command_reader, dispatcher : Dispatcher ) :
-		self._user_account = None
+		self.user_account = None
 		self._window = None
 
 		self._command_reader = command_reader
@@ -281,12 +318,12 @@ class CLIClient :
 		
 		line = w.get_line(self._terminal_line_handler.current_prompt_length)
 
-		self._terminal_line_handler.handle( line )
-
 		if line == '' :
 			w.display_current_prompt()
 
 			return
+
+		self._terminal_line_handler.handle( line )
 
 		request = self._terminal_line_handler.current_user_request
 
@@ -297,31 +334,77 @@ class CLIClient :
 
 			return
 
-		"""
-		Wait for a server response.
-		If we are using a client-notifying dispatcher,
-		client doesn't have to wait for a response, because
-		it will be notified by dispatcher, and this actually
-		will be done in the separate server thread.
-		"""
+		m = self._terminal_line_handler.error_message
+		if m is not None :
+			w.display_error_message( m )
+			self._terminal_line_handler.error_message = None
+
+			return
+
+		# """
+		# Wait for a server response.
+		# If we are using a client-notifying dispatcher,
+		# client doesn't have to wait for a response, because
+		# it will be notified by dispatcher, and this actually
+		# will be done in the separate server thread.
+		# """
+
+	# ???
+	def listen_to_dispatcher( self ) -> core.ServerResponse :
 		d = self._dispatcher
-		response = None
-		while response is None :
-			if d.has_server_response(request.requester_account) :
-				response = d.get_server_response(request.requester_account)
-			# else :
-			# 	print( prefix + "... waiting for response ..." )
+		user_account = self._terminal_line_handler.current_user_account
 
-			# sleep( 0.2 )
-
-		print( prefix + "... -> response" )
-		print( prefix + "handle response ..." )
-
-		self._server_response_handler.handle( response )
-
-		print( prefix + "... response handled" )
+		while True :
+			if d.has_server_response( user_account ) :
+				return d.get_server_response(request.requester_account)
 
 	def set_window( self, window ) :
 		self._window = window
 		self._terminal_line_handler.set_window( window )
 		self._server_response_handler._window = window
+
+
+class ClientManager :
+	def __init__( self ) :
+		self._cli_clients = []
+
+		self._t = Thread(
+			target = self._run,
+			daemon = True
+		)
+
+	def run( self ) :
+		self._t.start()
+
+	def add_client( self, client : CLIClient ) :
+		self._cli_clients.append( client )
+
+	def remove_client( self, client : CLIClient ) :
+		self._cli_clients.remove( client )
+
+	def _run( self ) :
+		prefix = "CLIENT MANAGER : "
+		print( prefix + "started" )
+
+		while True :
+			self._check_for_response_and_handle_it()
+
+			# print( prefix + "..." )
+
+			sleep( 0.5 )
+
+	def _check_for_response_and_handle_it( self ) :
+		for client in self._cli_clients :
+			client : CLIClient
+
+			d = client._dispatcher
+			user_account = client._terminal_line_handler.current_user_account
+
+			if user_account is None :
+				user_account = core.UserAccount( "" )
+
+			if d.has_server_response(user_account) :
+				response = d.get_server_response(user_account)
+
+				# handle response
+				client._server_response_handler.handle( response )
