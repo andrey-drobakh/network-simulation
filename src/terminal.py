@@ -20,26 +20,26 @@ class TerminalWindow :
 		)
 		self._text_widget[ "yscrollcommand" ] = self._scrollbar.set
 
+		self._text_widget.grid(
+			row=0,
+			column=0,
+			sticky="news",
+			padx=10,
+			pady=10,
+		)
+		self._text_widget.focus()
+
+		# self._scrollbar.grid(
+		# 	row = 0,
+		# 	column = 1,
+		# 	sticky = "news",
+		# )
+
 		self._standard_prompt = "$ "
 		self.prompt = self._standard_prompt
 
 		self._display_initial_text()
-		# self._set_bindings()
-
-
-	def show( self ) :
-		self._text_widget.grid(
-			row = 0,
-			column = 0,
-			sticky = "news"
-		)
-		self._text_widget.focus()
-
-		self._scrollbar.grid(
-			row = 0,
-			column = 1,
-			sticky = "news",
-		)
+		self._set_bindings()
 
 	def get_line( self, prefix_length ) :
 		line_number = self._get_caret_line_number()
@@ -116,12 +116,8 @@ class TerminalWindow :
 		return int( self._text_widget.index( tk.INSERT ).split( '.' )[ 0 ] )
 
 	def _set_bindings( self ) :
-		pass
-		# self._text_widget.bind( "<Return>", lambda e : print( "hello" ) )
- 		# self._text_widget.bind( "<Return>", lambda e : "break" )
- 		# self._text_widget.bind( "<Return>", lambda e : self._client.handle_enter_pressing() )
- 		# self._text_widget.bind( "<BackSpace>", lambda e : self._backspace_binding() )
- 		# self._text_widget.bind( "<Control-Key-h>", lambda e : print( "Ctrl+H pressed" ) )
+		self._text_widget.bind( "<BackSpace>", lambda e: self._backspace_binding() )
+		self._text_widget.bind( "<Left>", lambda e: self._left_key_binding() )
 
 	def _display_initial_text(self) :
 		self._text_widget.insert( "1.0", self.prompt)

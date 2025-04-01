@@ -1,6 +1,7 @@
 from account_database import AccountDatabase
 from core import UserAccount, UserRequest, ServerResponse
 import core
+import message_exchange as msg
 
 from threading import Thread
 from time import sleep
@@ -12,6 +13,7 @@ class Server :
 		self._dispatcher = dispatcher
 
 		self._data = {}
+		self._online_users = []
 
 		self._stop_flag = False
 		self._t = Thread(
@@ -40,7 +42,7 @@ class Server :
 			else :
 				request = self._dispatcher.get_user_request()
 
-				print( prefix + "... -> request" )
+				print( prefix + f"... -> request {request.ur_type}" )
 
 				self._handle_request( request )
 
@@ -66,6 +68,8 @@ class Server :
 			self._handle_login_account_password_sending( user_request )
 		elif ur_type == core.UR_LOGOUT :
 			self._handle_logout( user_request )
+		elif ur_type == msg.UR_SEND_MESSAGE :
+			self._handle_send_message( user_request )
 		else :
 			print( f"SERVER : unknown user request type : value {ur_type}" )
 
@@ -146,13 +150,15 @@ class Server :
 	def _handle_login( self, user_request : UserRequest ) :
 		requester_username = user_request.data
 
-		if "someone logged" in self._data and self._data[ "someone logged" ] == "yes" :
+		# Checking if a user is online is responsibility of the client.
+
+		if requester_username in self._online_users :
 			self._dispatcher.add_server_response(
 				ServerResponse(
-					core.SR_LOGIN_FAILED_A_USER_LOGGED,
+					core.SR_LOGIN_FAILED_USER_ALREADY_LOGGED,
 					user_request.requester_account,
 					data=None,
-					error_message="to log in, the current user must log out"
+					error_message=f"user {requester_username} is already logged in"
 				)
 			)
 
@@ -180,8 +186,7 @@ class Server :
 		request_password = user_request.data
 
 		if self._account_db.contains( username ) and request_password == self._account_db.get_password( username ) :
-			self._data[ username ] = "in"
-			self._data[ "someone logged" ] = "yes"
+			self._online_users.append( username )
 
 			response = core.ServerResponse(
 				core.SR_LOGIN_PASSED,
@@ -201,20 +206,54 @@ class Server :
 	def _handle_logout( self, user_request : UserRequest ) :
 		username = user_request.requester_account.username
 
-		if username in self._data and self._data[ username ] == "in" :
+		if username in self._online_users :
 			response = ServerResponse(
 				core.SR_LOGOUT_PASSED,
 				user_request.requester_account
 			)
 
-			self._data[ username ] = "out"
-			self._data[ "someone logged" ] = "no"
+			self._online_users.remove( username )
 		else :
 			response = ServerResponse(
 				core.SR_LOGOUT_FAILED_USER_NOT_LOGGED_IN,
 				user_request.requester_account,
 				data = None,
-				error_message = "you are not logged in yet"
+				error_message = "nobody is logged in yet"
 			)
 
 		self._dispatcher.add_server_response( response )
+
+	def _handle_send_message( self, user_request : UserRequest ) :
+		message_dest_username = user_request.data[ 0 ]
+
+		if not self._account_db.contains( message_dest_username ) :
+			response = ServerResponse(
+				msg.SR_MESSAGING_FAILED_USER_IS_NOT_REGISTERED,
+				user_request.requester_account,
+				data=None,
+				error_message=f"user {message_dest_username} is not registered"
+			)
+		elif self._account_db.contains( message_dest_username ) and message_dest_username not in self._online_users :
+			response = ServerResponse(
+				msg.SR_MESSAGING_FAILED_USER_IS_OFFLINE,
+				user_request.requester_account,
+				data = None,
+				error_message = f"user {message_dest_username} is offline now"
+			)
+		else :
+			response = ServerResponse(
+				msg.SR_MESSAGING_PASSED,
+				user_request.requester_account,
+			)
+
+			response2 = ServerResponse(
+				msg.SR_MESSAGING_A_MESSAGE_CAME,
+				UserAccount(message_dest_username),
+				data = [ user_request.data[ 1 ], user_request.requester_account ]
+			)
+
+			self._dispatcher.add_server_response( response2 )
+
+		self._dispatcher.add_server_response( response )
+
+
