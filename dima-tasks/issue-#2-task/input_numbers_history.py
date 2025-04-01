@@ -1,9 +1,7 @@
-
-
 def run_program() :
     exit_lines = ( 'q', 'quit', 'exit' )
     input_history_lines = ( '<=', '=>', 'back', 'forth' )
-    ls = []
+    sx = dict()
 
     while True :
         input_line = input( "Enter a number : " )
@@ -15,22 +13,24 @@ def run_program() :
         # то есть если это число или что-то другое.
         if input_line not in input_history_lines and input_line not in exit_lines :
             # add input line to history
-            ls.append(input_line)
-            l = len(ls)
-        elif input_line in ( '<=', 'back' ) :
-            # print previous input line
-            if l >= 1:
-                l -= 1
-                print(ls[l])
+
+            d = len(sx)
+            sx[d + 1] = input_line  # присваиваем значение инпут ключу по счетчику
+
+        elif input_line in ( '<=', 'back' ) and sx:
+            if sx and d >= 0:
+                print(sx.get(d, 'НАЧАЛО ИСТОРИИ, ЛИСТАЙТЕ ВПЕРЁД!'))
+                d -= 1
             else:
-                print('Конец истории, листайте вперёд!')
-        elif input_line in ( '=>', 'forth' ) :
-            # print next input line
-            l += 1
-            if l < len(ls):
-                print(ls[l])
+                print('НАЧАЛО ИСТОРИИ, ЛИСТАЙТЕ ВПЕРЁД!')
+
+        elif input_line in ( '=>', 'forth' ) and sx:
+            if sx and d < len(sx):
+                d += 1
+                print(sx.get(d+1, 'КОНЕЦ ИСТОРИИ, ЛИСТАЙТЕ НАЗАД!'))
             else:
-                print('Конец истории, листайте назад!')
+                print('КОНЕЦ ИСТОРИИ, ЛИСТАЙТЕ НАЗАД!')
+
         elif input_line in exit_lines :
             break
 
