@@ -5,11 +5,13 @@ import message_exchange as msg
 
 from threading import Thread
 from time import sleep
+import pathlib
 
 
 class Server :
 	def __init__( self, dispatcher ) :
-		self._account_db = AccountDatabase( "account_db.txt" )
+		db_file_path = str( pathlib.Path(__file__).parent.joinpath("account_db.txt").resolve() )
+		self._account_db = AccountDatabase( db_file_path )
 		self._dispatcher = dispatcher
 
 		self._data = {}
