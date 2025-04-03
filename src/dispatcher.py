@@ -1,4 +1,5 @@
 from queue import Queue
+import core
 
 
 class Dispatcher :
@@ -9,7 +10,7 @@ class Dispatcher :
 	def add_user_request( self, user_request ) :
 		self._request_queue.put( user_request )
 
-	def get_user_request( self ) :
+	def get_user_request( self ) -> core.UserRequest :
 		return self._request_queue.get()
 
 	def add_server_response( self, server_response ) :
@@ -21,7 +22,7 @@ class Dispatcher :
 
 		self._username_to_response_queue[ username ].put( server_response )
 
-	def get_server_response( self, user_account ) :
+	def get_server_response( self, user_account ) -> core.ServerResponse :
 		username = user_account.username
 		return self._username_to_response_queue[ username ].get()
 
