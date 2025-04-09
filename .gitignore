@@ -2,3 +2,5 @@
 src/account_db.txt
 __pycache__
 _*
+
+!__init__.py
