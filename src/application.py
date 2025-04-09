@@ -1,9 +1,8 @@
 from server import Server
-from client import CLIClient, TerminalCommandReader, \
-	SrvRegisterCommandParser, \
-	SrvLoginCommandParser, \
-	SrvLogoutCommandParser, \
-	ClientManager
+from cli_client.cli_client import CLIClient
+from cli_client.cli_client_manager import ClientManager
+from cli_client import parsers
+from cli_client.command_reader import CommandReader
 from dispatcher import Dispatcher
 from terminal import TerminalWindow
 import terminal
@@ -33,7 +32,7 @@ def set_main_window_location( root ) :
 ctrl_t_is_pressed = False
 def ctrl_t_binding(
 		mainframe,
-		command_reader : TerminalCommandReader,
+		command_reader : CommandReader,
 		dispatcher : Dispatcher,
 		client_manager : ClientManager
 ) :
@@ -99,10 +98,10 @@ class Application :
 
 		dispatcher = Dispatcher()
 
-		command_reader = TerminalCommandReader()
-		command_reader.add_parser(SrvRegisterCommandParser())
-		command_reader.add_parser(SrvLoginCommandParser())
-		command_reader.add_parser(SrvLogoutCommandParser())
+		command_reader = CommandReader()
+		command_reader.add_parser(parsers.SrvRegisterCommandParser())
+		command_reader.add_parser(parsers.SrvLoginCommandParser())
+		command_reader.add_parser(parsers.SrvLogoutCommandParser())
 		command_reader.add_parser(SrvSendCommandParser())
 
 		cli_client = CLIClient(
